@@ -4,40 +4,27 @@ const cheerio = require("cheerio");
 const xlsx = require("xlsx");
 const cliProgress = require("cli-progress");
 
+const articleSource = xlsx.readFile("PriceList.xlsx");
 const wb = xlsx.readFile("ArtPrices.xlsx");
-const ws = wb.Sheets["InitialData"];
-const rs = wb.Sheets["Result"];
-const data = xlsx.utils.sheet_to_json(ws);
+// const ws = wb.Sheets["InitialData"];
+const data = [];
+let arrayOfArticles = [];
 
-// const arrayOfArticles = data.map((obj) => {
-// 	if (isNaN(Number(obj.Article))) {
-// 		return obj.Article;
-// 	} else {
-// 		return Number(obj.Article);
-// 	}
-// });
-
-let arrayOfArticles = data.map((obj) => {
-	if (!isNaN(obj.Article)) {
-		return Number(obj.Article);
+for (let sheetIndex in articleSource.Sheets) {
+	var sheet = articleSource.Sheets[sheetIndex];
+	for (var cellIndex in sheet) {
+		var attr = sheet[cellIndex];
+		if (attr.t == "n" && (attr.w.length == 8 || attr.w.length == 6)) {
+			arrayOfArticles.push(attr.v);
+			data.push({ Article: attr.v });
+		}
 	}
-});
-
-// arrayOfArticles = arrayOfArticles.filter((article) => article);
+}
 
 console.log(arrayOfArticles);
 let resultPriceArray = [];
 console.log("Идет процесс обработки... Примерное время обработки 5 мин.");
 console.log("Пожалуйста не закрывайте окно до окончания работы программы!");
-// const consoleProgressBar2 = new ConsoleProgressBar({
-// 	maxValue: arrayOfArticles.length,
-// });
-// const consoleProgressBar3 = new ConsoleProgressBar({
-// 	maxValue: arrayOfArticles.length,
-// });
-// const consoleProgressBar4 = new ConsoleProgressBar({
-// 	maxValue: arrayOfArticles.length,
-// });
 
 let bar = [];
 const multibar = new cliProgress.MultiBar(
@@ -96,7 +83,6 @@ Promise.all([
 			record.Price = resultPriceArray[i];
 			return record;
 		});
-		// console.log(newData);
 		wb.Sheets["Result"] = xlsx.utils.json_to_sheet(newData);
 		xlsx.writeFile(wb, "ArtPrices.xlsx");
 	})
